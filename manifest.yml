@@ -1,0 +1,7 @@
+id: com.example.timetrigger
+name: 每日定时触发器
+description: 自定义每天指定时分触发自动化，支持选择星期、触发日志与统计、批量导入
+entranceAssembly: "TimeTriggerPlugin.dll"
+author: 自定义
+version: 1.2.4
+apiVersion: 2.0.0.0
