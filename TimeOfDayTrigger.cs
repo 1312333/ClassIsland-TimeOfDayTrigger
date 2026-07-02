@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using ClassIsland.Core.Abstractions.Automation;
 using ClassIsland.Core.Attributes;
@@ -9,7 +11,7 @@ namespace TimeTriggerPlugin;
 [TriggerInfo("com.example.timetrigger", "每日指定时间", "\uE125")]
 public class TimeOfDayTrigger : TriggerBase<TimeOfDayTriggerSettings>
 {
-    private Timer? _timer;
+    private readonly Dictionary<TimeOnly, Timer> _timers = new();
     private readonly ILogger<TimeOfDayTrigger> _logger;
 
     public TimeOfDayTrigger(ILogger<TimeOfDayTrigger> logger)
@@ -19,54 +21,86 @@ public class TimeOfDayTrigger : TriggerBase<TimeOfDayTriggerSettings>
 
     public override void Loaded()
     {
-        _logger.LogInformation("⏰ 定时触发器已启动");
+        _logger.LogInformation("⏰ 多时间点定时触发器已启动");
         Settings.PropertyChanged += SettingsOnPropertyChanged;
-        ScheduleNextTrigger();
+        ScheduleAllTriggers();
     }
 
     public override void UnLoaded()
     {
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
-        _timer?.Dispose();
-        _timer = null;
+        DisposeAllTimers();
     }
 
     private void SettingsOnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        _timer?.Dispose();
-        _timer = null;
-        ScheduleNextTrigger();
+        DisposeAllTimers();
+        ScheduleAllTriggers();
     }
 
-    private void ScheduleNextTrigger()
+    #region 定时器管理
+    private void ScheduleAllTriggers()
     {
-        var now = DateTime.Now;
-        var target = GetNextTriggerTime(now);
-        if (target.HasValue)
+        if (Settings == null || !Settings.TriggerTimes.Any())
         {
-            var delay = target.Value - now;
-            if (delay < TimeSpan.Zero) delay = TimeSpan.FromSeconds(1);
-            _timer = new Timer(_ => OnTrigger(), null, delay, Timeout.InfiniteTimeSpan);
-            _logger.LogInformation("下次触发时间: {Time}", target.Value);
+            _logger.LogWarning("无有效触发时间点，跳过调度");
+            return;
+        }
+
+        var now = DateTime.Now;
+        foreach (var timePoint in Settings.TriggerTimes)
+        {
+            ScheduleSingleTrigger(timePoint, now);
         }
     }
 
-    private DateTime? GetNextTriggerTime(DateTime from)
+    private void ScheduleSingleTrigger(TimeOnly timePoint, DateTime from)
+    {
+        var nextTriggerTime = GetNextTriggerTimeForTimePoint(timePoint, from);
+        if (nextTriggerTime.HasValue)
+        {
+            var delay = nextTriggerTime.Value - from;
+            if (delay < TimeSpan.Zero) delay = TimeSpan.FromSeconds(1);
+            
+            var timer = new Timer(_ => OnTrigger(timePoint), null, delay, Timeout.InfiniteTimeSpan);
+            _timers[timePoint] = timer;
+            
+            _logger.LogInformation("时间点 {Time} 下次触发时间: {NextTime}", 
+                timePoint.ToString("HH:mm"), nextTriggerTime.Value);
+        }
+    }
+
+    private void DisposeAllTimers()
+    {
+        foreach (var timer in _timers.Values)
+        {
+            timer.Dispose();
+        }
+        _timers.Clear();
+    }
+    #endregion
+
+    #region 时间计算
+    private DateTime? GetNextTriggerTimeForTimePoint(TimeOnly timePoint, DateTime from)
     {
         var s = Settings;
         if (s == null) return null;
 
         if (IsDayMatch(from.DayOfWeek, s))
         {
-            var today = new DateTime(from.Year, from.Month, from.Day, s.Hour, s.Minute, 0);
-            if (today > from) return today;
+            var todayTarget = new DateTime(from.Year, from.Month, from.Day, 
+                timePoint.Hour, timePoint.Minute, 0);
+            if (todayTarget > from) return todayTarget;
         }
 
         for (int i = 1; i <= 7; i++)
         {
             var date = from.AddDays(i);
             if (IsDayMatch(date.DayOfWeek, s))
-                return new DateTime(date.Year, date.Month, date.Day, s.Hour, s.Minute, 0);
+            {
+                return new DateTime(date.Year, date.Month, date.Day, 
+                    timePoint.Hour, timePoint.Minute, 0);
+            }
         }
         return null;
     }
@@ -82,18 +116,18 @@ public class TimeOfDayTrigger : TriggerBase<TimeOfDayTriggerSettings>
         DayOfWeek.Sunday => s.IsSunday,
         _ => false
     };
+    #endregion
 
-    private void OnTrigger()
+    private void OnTrigger(TimeOnly triggeredTimePoint)
     {
-        _logger.LogInformation("⏰ 定时器触发了！");
+        _logger.LogInformation("⏰ 定时器触发：{Time}", triggeredTimePoint.ToString("HH:mm"));
         
-        // 记录触发日志
         try
         {
             TriggerLogService.RecordTrigger(
-                TimeSpan.FromHours(Settings?.Hour ?? 0) + TimeSpan.FromMinutes(Settings?.Minute ?? 0),
+                TimeSpan.FromHours(triggeredTimePoint.Hour) + TimeSpan.FromMinutes(triggeredTimePoint.Minute),
                 true,
-                "触发成功"
+                $"多时间点触发：{triggeredTimePoint.ToString("HH:mm")}"
             );
         }
         catch
@@ -102,6 +136,8 @@ public class TimeOfDayTrigger : TriggerBase<TimeOfDayTriggerSettings>
         }
         
         Trigger();
-        ScheduleNextTrigger();
+        
+        var now = DateTime.Now;
+        ScheduleSingleTrigger(triggeredTimePoint, now);
     }
 }

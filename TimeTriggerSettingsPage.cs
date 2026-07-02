@@ -11,7 +11,7 @@ using ClassIsland.Core.Enums.SettingsWindow;
 
 namespace TimeTriggerPlugin;
 
-[SettingsPageInfo("com.example.timetrigger.settings", "定时触发器设置", "\uE125", "\uE125", SettingsPageCategory.External)]
+[SettingsPageInfo("com.example.timetrigger.settings", "定时触发器设置")]
 public class TimeTriggerSettingsPage : SettingsPageBase
 {
     private TextBlock? _statsText;
@@ -93,14 +93,11 @@ public class TimeTriggerSettingsPage : SettingsPageBase
             ItemsSource = _logItems
         };
         logPanel.Children.Add(_logList);
-
         mainPanel.Children.Add(logPanel);
 
-        // 批量导入
-        mainPanel.Children.Add(CreateSectionHeader("批量导入时间（每行一个时间，格式 HH:mm）"));
-
+        // 批量导入时间点
+        mainPanel.Children.Add(CreateSectionHeader("批量导入时间点（每行一个时间，格式 HH:mm）"));
         var importPanel = new StackPanel { Spacing = 8, Margin = new Avalonia.Thickness(8, 0, 0, 0) };
-
         _importTextBox = new TextBox
         {
             AcceptsReturn = true,
@@ -111,7 +108,7 @@ public class TimeTriggerSettingsPage : SettingsPageBase
 
         var importButton = new Button
         {
-            Content = "导入（创建多个触发器）",
+            Content = "解析时间点",
             HorizontalAlignment = HorizontalAlignment.Left
         };
         importButton.Click += OnImportClick;
@@ -119,13 +116,12 @@ public class TimeTriggerSettingsPage : SettingsPageBase
 
         var importHint = new TextBlock
         {
-            Text = "注意：批量导入功能会创建多个独立的定时触发器。导入后需要在自动化面板中手动为每个触发器配置动作。",
+            Text = "提示：解析后可复制时间点，在自动化触发器设置中通过「便携导入」功能批量添加到单个触发器中。\n一个触发器支持多个时间点，无需重复创建多个自动化。",
             TextWrapping = TextWrapping.Wrap,
             Foreground = Brushes.Gray,
             FontSize = 12
         };
         importPanel.Children.Add(importHint);
-
         mainPanel.Children.Add(importPanel);
 
         scrollViewer.Content = mainPanel;
@@ -147,7 +143,6 @@ public class TimeTriggerSettingsPage : SettingsPageBase
     {
         var logs = TriggerLogService.GetLogs();
         
-        // 更新统计
         var totalCount = logs.Count;
         var todayCount = logs.Count(l => l.TriggerTime.Date == DateTime.Today);
         var successCount = logs.Count(l => l.Success);
@@ -157,7 +152,6 @@ public class TimeTriggerSettingsPage : SettingsPageBase
             _statsText.Text = $"总触发次数：{totalCount}\n今日触发次数：{todayCount}\n成功次数：{successCount}\n成功率：{(totalCount > 0 ? (successCount * 100.0 / totalCount).ToString("F1") : "N/A")}%";
         }
 
-        // 更新日志列表
         if (_logItems != null)
         {
             _logItems.Clear();
@@ -175,7 +169,6 @@ public class TimeTriggerSettingsPage : SettingsPageBase
                     Margin = new Avalonia.Thickness(0, 2, 0, 2)
                 });
             }
-
             if (_logItems.Count == 0)
             {
                 _logItems.Add(new TextBlock
@@ -200,9 +193,9 @@ public class TimeTriggerSettingsPage : SettingsPageBase
 
         foreach (var line in lines)
         {
-            if (TimeSpan.TryParse(line, out var time))
+            if (TimeOnly.TryParse(line, out var time))
             {
-                importedTimes.Add($"{time.Hours:D2}:{time.Minutes:D2}");
+                importedTimes.Add(time.ToString("HH:mm"));
                 successCount++;
             }
             else
@@ -211,11 +204,13 @@ public class TimeTriggerSettingsPage : SettingsPageBase
             }
         }
 
-        // 显示导入结果
-        var resultText = $"导入完成：成功 {successCount} 个，失败 {failCount} 个\n\n" +
-                         "已解析的时间：\n" + string.Join("\n", importedTimes) + "\n\n" +
-                         "注意：由于 ClassIsland 限制，插件无法直接创建触发器。\n" +
-                         "请手动在自动化面板中创建对应时间的定时触发器。";
+        var resultText = $"解析完成：成功 {successCount} 个，失败 {failCount} 个\n\n" +
+                         "已解析的时间点：\n" + string.Join("\n", importedTimes.OrderBy(t => t)) + "\n\n" +
+                         "使用方法：\n" +
+                         "1. 复制上面的时间点文本\n" +
+                         "2. 进入「自动化」面板，创建或编辑定时触发器\n" +
+                         "3. 在「便携导入」区域粘贴文本，点击「识别并添加时间点」\n" +
+                         "4. 所有时间点会添加到同一个触发器中";
 
         if (_statsText != null)
         {

@@ -1,11 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace TimeTriggerPlugin;
 
 public class TimeOfDayTriggerSettings : ObservableRecipient
 {
-    private int _hour = 8;
-    private int _minute = 0;
+    private ObservableCollection<TimeOnly> _triggerTimes = new() { new TimeOnly(8, 0) };
     private bool _isMonday = true;
     private bool _isTuesday = true;
     private bool _isWednesday = true;
@@ -14,16 +15,10 @@ public class TimeOfDayTriggerSettings : ObservableRecipient
     private bool _isSaturday = false;
     private bool _isSunday = false;
 
-    public int Hour
+    public ObservableCollection<TimeOnly> TriggerTimes
     {
-        get => _hour;
-        set => SetProperty(ref _hour, value);
-    }
-
-    public int Minute
-    {
-        get => _minute;
-        set => SetProperty(ref _minute, value);
+        get => _triggerTimes;
+        set => SetProperty(ref _triggerTimes, value);
     }
 
     public bool IsMonday
@@ -74,6 +69,10 @@ public class TimeOfDayTriggerSettings : ObservableRecipient
         if (IsSunday) days.Add("日");
 
         var dayStr = days.Count == 7 ? "每天" : string.Join("、", days);
-        return $"{dayStr} {Hour:D2}:{Minute:D2}";
+        var timeStr = TriggerTimes.Any() 
+            ? string.Join("、", TriggerTimes.OrderBy(t => t).Select(t => t.ToString("HH:mm"))) 
+            : "无时间点";
+        
+        return $"{dayStr} {timeStr}";
     }
 }

@@ -47,7 +47,6 @@ public static class TriggerLogService
             {
                 LoadLogs();
             }
-
             _logs?.Insert(0, new TriggerLogEntry
             {
                 TriggerTime = DateTime.Now,
@@ -55,13 +54,10 @@ public static class TriggerLogService
                 Success = success,
                 Message = message
             });
-
-            // 只保留最近 100 条记录
             if (_logs?.Count > 100)
             {
                 _logs = _logs.Take(100).ToList();
             }
-
             SaveLogs();
         }
     }
@@ -104,7 +100,6 @@ public static class TriggerLogService
             {
                 Directory.CreateDirectory(dir);
             }
-
             var json = JsonSerializer.Serialize(_logs, new JsonSerializerOptions
             {
                 WriteIndented = true
