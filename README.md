@@ -43,7 +43,7 @@
 ### v1.0.2
 - 🐛【修复】切换设置界面后参数丢失、配置无法持久化保存的问题
 
-##许可证
+## 许可证
 MIT License © 1312333
 
 [![GitHub Roast 评分徽章](https://ghfind.com/api/badge/1312333)](https://ghfind.com/u/1312333)
