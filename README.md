@@ -4,7 +4,9 @@
 
 > ***注：本插件部分代码由AI完成***
 
+> \[!caution]
 > **因有更好的插件[AdvancedTimeIsland](https://github.com/inf2147483647/AdvancedTimeIsland),故此插件停止开发**
+
 ## 核心功能
 - **多时间点支持**：单个触发器可添加任意多个时间点，无需重复创建多条自动化规则
 - **原生时间选择**：采用 Avalonia 原生 TimePicker 控件，选时直观精准，自带格式校验
