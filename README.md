@@ -3,6 +3,7 @@
 一款适配 ClassIsland 自动化模块的自定义定时触发器插件，支持「多时间点 + 星期筛选」组合触发条件，精准控制自动化动作的执行时机。
 
 > ***注：本插件部分代码由AI完成***
+> **因有更好的插件[AdvancedTimeIsland](https://github.com/inf2147483647/AdvancedTimeIsland),故此插件停止开发**
 ## 核心功能
 - **多时间点支持**：单个触发器可添加任意多个时间点，无需重复创建多条自动化规则
 - **原生时间选择**：采用 Avalonia 原生 TimePicker 控件，选时直观精准，自带格式校验
@@ -46,5 +47,6 @@
 ## 许可证
 MIT License © 1312333
 
+[类似插件](https://github.com/inf2147483647/AdvancedTimeIsland)
 [![GitHub Roast 评分徽章](https://ghfind.com/api/badge/1312333)](https://ghfind.com/u/1312333)
 [ClassIsland 开发文档](https://docs.classisland.tech/dev/)
