@@ -3,7 +3,7 @@
 一款适配 ClassIsland 自动化模块的自定义定时触发器插件，支持「多时间点 + 星期筛选」组合触发条件，精准控制自动化动作的执行时机。
 
 > [!IMPORTANT]
-> ***注：本插件部分代码由AI完成***
+> ***注：此插件部分代码由AI完成***
 
 > [!WARNING]
 > **因有更好的插件[AdvancedTimeIsland](https://github.com/inf2147483647/AdvancedTimeIsland),故此插件停止开发** ~~其实是没什么东西能加了~~
