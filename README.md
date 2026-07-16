@@ -4,7 +4,7 @@
 
 > ***注：本插件部分代码由AI完成***
 
-> \[!caution]
+> \[!NOTE]
 > **因有更好的插件[AdvancedTimeIsland](https://github.com/inf2147483647/AdvancedTimeIsland),故此插件停止开发**
 
 ## 核心功能
